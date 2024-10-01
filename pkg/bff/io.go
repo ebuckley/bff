@@ -2,13 +2,27 @@ package bff
 
 import (
 	"fmt"
-	"strings"
 )
 
 type Io struct {
-	stack   []any
+	stack   []Executable
 	Display Display
 	Input   Input
+	input   <-chan Message
+	output  chan<- Message
+}
+
+func NewIo(input <-chan Message, output chan<- Message) *Io {
+	io := &Io{
+		stack:  make([]Executable, 0),
+		input:  input,
+		output: output,
+	}
+	display := Display{io}
+	i := Input{io}
+	io.Display = display
+	io.Input = i
+	return io
 }
 
 // Display represents the display device, call methods to add display content to the stack
@@ -20,20 +34,16 @@ type Display struct {
 type Input struct {
 	io *Io
 }
-
-type Renderable interface {
-	// Render returns the JSON representation state of the element, for showing something on the screen
-	Render() string
-}
-type Inputable interface {
-	// Input will wait for the input and return the value.. it means network round trips etc etc
-	Input(any) (any, error)
+type Executable interface {
+	Execute(input <-chan Message, output chan<- Message) (any, error)
 }
 
 // need to support
+// DONE:
 // - Group: Combines multiple I/O method calls into a single form.
 // - input.Text requests a string value
 // - input.boolean requests a boolean value
+// TODO:
 // - input.number requests a number value
 // - input.email requests an email value
 // - input.slider requests a number value within a range
@@ -47,137 +57,122 @@ type Inputable interface {
 // - input.search search for arbitrary results using a search box
 // - input.selectTable requests a selection from a table of options
 // - input.selectSingle Prompts the app user to select a single value from a set of provided values.
-// - display.code Displays a block of code to the action user.
-// - display.grid  Displays data in a grid layout.
-// - display.heading Displays a heading to the action user.
-// - display.html Displays rendered HTML to the action user.
-// - display.image Displays an image to the action user. One of url or buffer must be provided.
-// - display.link Displays a button-styled action link to the action user. Can link to an external URL or to another action.
-// - display.markdown Displays rendered markdown to the action user. display.metadata
-// - display.metadata Displays a series of label/value pairs in a variety of layout options.
-// - display.object Displays an object of nested data to the action user.
-// - display.table Displays tabular data.
-// - display.video Displays a video to the action user. One of url or buffer must be provided.
 
 // InputBase defines everything that all inputs have in common
 type InputBase struct {
-	Label       string
-	HelpText    string
-	Placeholder string
-	Required    bool
+	Label       string `json:"label,omitempty"`
+	HelpText    string `json:"helpText,omitempty"`
+	Placeholder string `json:"placeholder,omitempty"`
+	Required    bool   `json:"required,omitempty"`
 }
 
 // TextInput is a text box input
 type TextInput struct {
 	InputBase
-	MinLength int
-	MaxLength int
+	MinLength int `json:"minLength,omitempty"`
+	MaxLength int `json:"maxLength,omitempty"`
 }
 
-func (t TextInput) Render() string {
-	return fmt.Sprintf(`{"type":"text","label":"%s","helpText":"%s","placeholder":"%s","required":%t,"minLength":%d,"maxLength":%d}`,
-		t.Label, t.HelpText, t.Placeholder, t.Required, t.MinLength, t.MaxLength)
-}
-
-func (t TextInput) Input(value any) (any, error) {
-	str, ok := value.(string)
-	if !ok {
-		return nil, fmt.Errorf("expected string, got %T", value)
+func (h *TextInput) Execute(input <-chan Message, output chan<- Message) (any, error) {
+	output <- Message{Type: "textInput", Data: h}
+	m := <-input
+	if m.Type != "input" {
+		return nil, fmt.Errorf("expected input, got %s", m.Type)
 	}
-	if len(str) < t.MinLength || (t.MaxLength > 0 && len(str) > t.MaxLength) {
-		return nil, fmt.Errorf("input length must be between %d and %d", t.MinLength, t.MaxLength)
-	}
-	return str, nil
+	return m.Data, nil
 }
 
-// BooleanInput
 type BooleanInput struct {
 	InputBase
 }
 
-func (b BooleanInput) Render() string {
-	return fmt.Sprintf(`{"type":"boolean","label":"%s","helpText":"%s","required":%t}`,
-		b.Label, b.HelpText, b.Required)
-}
-
-func (b BooleanInput) Input(value any) (any, error) {
-	boolVal, ok := value.(bool)
-	if !ok {
-		return nil, fmt.Errorf("expected boolean, got %T", value)
+func (h *BooleanInput) Execute(input <-chan Message, output chan<- Message) (any, error) {
+	output <- Message{Type: "booleanInput", Data: h}
+	m := <-input
+	if m.Type != "input" {
+		return nil, fmt.Errorf("expected input, got %s", m.Type)
 	}
-	return boolVal, nil
+	return m.Data, nil
 }
 
-// NumberInput
 type NumberInput struct {
 	InputBase
 	Min float64
 	Max float64
 }
 
-func (n NumberInput) Render() string {
-	return fmt.Sprintf(`{"type":"number","label":"%s","helpText":"%s","placeholder":"%s","required":%t,"min":%f,"max":%f}`,
-		n.Label, n.HelpText, n.Placeholder, n.Required, n.Min, n.Max)
+func (h *NumberInput) Execute(input <-chan Message, output chan<- Message) (any, error) {
+	output <- Message{Type: "numberInput", Data: h}
+	m := <-input
+	if m.Type != "input" {
+		return nil, fmt.Errorf("expected input, got %s", m.Type)
+	}
+	return m.Data, nil
 }
 
-func (n NumberInput) Input(value any) (any, error) {
-	num, ok := value.(float64)
-	if !ok {
-		return nil, fmt.Errorf("expected number, got %T", value)
-	}
-	if num < n.Min || (n.Max > 0 && num > n.Max) {
-		return nil, fmt.Errorf("input must be between %f and %f", n.Min, n.Max)
-	}
-	return num, nil
-}
+//---------------
+//  Display Types
+//---------------
+// DONE:
+// - display.heading Displays a heading to the action user.
+// - display.markdown Displays rendered markdown to the action user. display.metadata
 
-// Display types
+// TODO:
+// - display.html Displays rendered HTML to the action user.
+// - display.code Displays a block of code to the action user.
+// - display.grid  Displays data in a grid layout.
+// - display.image Displays an image to the action user. One of url or buffer must be provided.
+// - display.link Displays a button-styled action link to the action user. Can link to an external URL or to another action.
+// - display.metadata Displays a series of label/value pairs in a variety of layout options.
+// - display.object Displays an object of nested data to the action user.
+// - display.table Displays tabular data.
+// - display.video Displays a video to the action user. One of url or buffer must be provided.
+
 type CodeDisplay struct {
-	Code     string
-	Language string
+	Code     string `json:"code,omitempty"`
+	Language string `json:"language,omitempty"`
 }
 
-func (c CodeDisplay) Render() string {
-
-	return fmt.Sprintf(`{"type":"code","code":%s,"language":"%s"}`,
-		c.Code, c.Language)
+func (c CodeDisplay) Execute(input <-chan Message, output chan<- Message) (any, error) {
+	output <- Message{Type: "code", Data: c}
+	return nil, nil
 }
 
 type HeadingDisplay struct {
-	Text  string
-	Level int
+	Text  string `json:"text,omitempty"`
+	Level int    `json:"level,omitempty"`
 }
 
-func (h HeadingDisplay) Render() string {
-	return fmt.Sprintf(`{"type":"heading","text":"%s","level":%d}`, h.Text, h.Level)
+func (h HeadingDisplay) Execute(input <-chan Message, output chan<- Message) (any, error) {
+	output <- Message{Type: "display", Data: h}
+	return nil, nil
 }
 
 type MarkdownDisplay struct {
-	Content string
+	Content string `json:"content"`
 }
 
-func (m MarkdownDisplay) Render() string {
-	return fmt.Sprintf(`{"type":"markdown","content":%s}`, m.Content)
+func (m MarkdownDisplay) Execute(input <-chan Message, output chan<- Message) (any, error) {
+	output <- Message{Type: "markdown", Data: m}
+	return nil, nil
 }
 
 // Implement other input and display types similarly...
 
 // Group combines multiple I/O method calls
 type Group struct {
-	Elements []Renderable
+	Elements []Executable
 }
 
-func (g Group) Render() string {
-	elements := make([]string, len(g.Elements))
-	for i, elem := range g.Elements {
-		elements[i] = elem.Render()
-	}
-	return fmt.Sprintf(`{"type":"group","elements":[%s]}`, strings.Join(elements, ","))
+func (g Group) Execute(input <-chan Message, output chan<- Message) error {
+	output <- Message{Type: "group", Data: g}
+	return nil
 }
 
-// AddToStack Helper functions for Io struct
-func (io *Io) AddToStack(element Renderable) {
+// AddToStack adds the element to the stack and executes it -- returning the result of the execution
+func (io *Io) AddToStack(element Executable) (any, error) {
 	io.stack = append(io.stack, element)
+	return element.Execute(io.input, io.output)
 }
 
 func (d *Display) Heading(text string, level int) {
@@ -192,22 +187,36 @@ func (d *Display) Markdown(content string) {
 	d.io.AddToStack(MarkdownDisplay{Content: content})
 }
 
-func (i *Input) Text(label string, options ...func(*TextInput)) Inputable {
+func (i *Input) Text(label string, options ...func(*TextInput)) (string, error) {
 	input := &TextInput{InputBase: InputBase{Label: label}}
 	for _, option := range options {
 		option(input)
 	}
-	i.io.AddToStack(input)
-	return input
+	v, err := i.io.AddToStack(input)
+	if err != nil {
+		return "", err
+	}
+	s, ok := v.(string)
+	if !ok {
+		return "", fmt.Errorf("expected string, got %T", v)
+	}
+	return s, nil
 }
 
-func (i *Input) Boolean(label string, options ...func(*BooleanInput)) Inputable {
+func (i *Input) Boolean(label string, options ...func(*BooleanInput)) (bool, error) {
 	input := &BooleanInput{InputBase: InputBase{Label: label}}
 	for _, option := range options {
 		option(input)
 	}
-	i.io.AddToStack(input)
-	return input
+	v, err := i.io.AddToStack(input)
+	if err != nil {
+		return false, err
+	}
+	b, ok := v.(bool)
+	if !ok {
+		return false, fmt.Errorf("expected boolean, got %T", v)
+	}
+	return b, nil
 }
 
 // Implement other input methods similarly...

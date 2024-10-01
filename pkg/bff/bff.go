@@ -2,15 +2,21 @@ package bff
 
 import (
 	"context"
+	"log/slog"
 	"sync"
 )
+
+// Message represents a message with the backend
+type Message struct {
+	Type string `json:"type,omitempty"`
+	Data any    `json:"data,omitempty"`
+}
 
 // BFF represents the Backend for Frontend, which manages actions and pages
 type BFF struct {
 	actions     map[string]*Action
 	pages       map[string]*Page
 	mu          sync.RWMutex
-	io          *Io
 	environment string
 }
 
@@ -19,7 +25,6 @@ func New(environment string) *BFF {
 	return &BFF{
 		actions:     make(map[string]*Action),
 		pages:       make(map[string]*Page),
-		io:          &Io{},
 		environment: environment,
 	}
 }
@@ -61,16 +66,17 @@ func (b *BFF) RegisterPage(name string, actions []string) error {
 }
 
 // ExecuteAction runs the specified action
-func (b *BFF) ExecuteAction(ctx context.Context, name string, params map[string]interface{}) (interface{}, error) {
+func (b *BFF) ExecuteAction(ctx context.Context, name string, input <-chan Message, output chan<- Message) error {
 	b.mu.RLock()
 	action, exists := b.actions[name]
 	b.mu.RUnlock()
-
 	if !exists {
-		return nil, ErrActionNotFound
+		return ErrActionNotFound
 	}
+	// make a nice little IO context we can give to the action to handle
+	io := NewIo(input, output)
 
-	return action.Execute(ctx, b.io, params)
+	return action.handler(ctx, io)
 }
 
 // GetPages returns all registered pages
@@ -99,4 +105,31 @@ func (b *BFF) GetActions() []*Action {
 		actions = append(actions, a)
 	}
 	return actions
+}
+
+func (b *BFF) Loop(ctx context.Context, input <-chan Message, output chan<- Message) {
+	// the application loop
+	for {
+		select {
+		case <-ctx.Done():
+			slog.Debug("exiting bff loop with connection")
+			return
+		case v := <-input:
+			if v.Type == "start" {
+				// pass the input/output chanel to execute action
+				name, ok := v.Data.(string)
+				if !ok {
+					output <- Message{Type: "error", Data: "expected string"}
+					continue
+				}
+				err := b.ExecuteAction(ctx, name, input, output)
+				if err != nil {
+					output <- Message{Type: "error", Data: err.Error()}
+					slog.Error("failed to execute action: ", "err", err)
+					return
+				}
+				return
+			}
+		}
+	}
 }

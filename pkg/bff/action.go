@@ -9,16 +9,14 @@ import (
 var ErrActionAlreadyExists = errors.New("action already exists")
 var ErrActionNotFound = errors.New("action not found")
 
-type HandlerFunc func(ctx context.Context, io *Io, params map[string]any) (any, error)
+type HandlerFunc func(ctx context.Context, io *Io) error
 
 type Action struct {
 	handler     HandlerFunc
+	display     chan string
+	input       chan any
 	Name        string `json:"name" json:"name,omitempty"`
 	Description string `json:"description,omitempty"`
-}
-
-func (a Action) Execute(ctx context.Context, io *Io, params map[string]any) (any, error) {
-	return a.handler(ctx, io, params)
 }
 
 type ActionOption func(*Action)
@@ -34,6 +32,6 @@ func NewAction(name string, handler HandlerFunc, opts ...ActionOption) *Action {
 	return action
 }
 
-func (a Action) Render() string {
+func (a *Action) Render() string {
 	return fmt.Sprintf(`{"Name": "%s", "Description": "%s"}`, a.Name, a.Description)
 }
