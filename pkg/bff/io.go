@@ -2,6 +2,7 @@ package bff
 
 import (
 	"fmt"
+	"strconv"
 )
 
 type Io struct {
@@ -116,25 +117,26 @@ func (h *NumberInput) Execute(input <-chan Message, output chan<- Message) (any,
 // DONE:
 // - display.heading Displays a heading to the action user.
 // - display.markdown Displays rendered markdown to the action user. display.metadata
-
-// TODO:
-// - display.html Displays rendered HTML to the action user.
-// - display.code Displays a block of code to the action user.
-// - display.grid  Displays data in a grid layout.
 // - display.image Displays an image to the action user. One of url or buffer must be provided.
 // - display.link Displays a button-styled action link to the action user. Can link to an external URL or to another action.
 // - display.metadata Displays a series of label/value pairs in a variety of layout options.
+// - display.code Displays a block of code to the action user.
+
+// TODO:
+// - display.html Displays rendered HTML to the action user.
+// - display.grid  Displays data in a grid layout https://interval.com/docs/io-methods/display-grid
 // - display.object Displays an object of nested data to the action user.
 // - display.table Displays tabular data.
 // - display.video Displays a video to the action user. One of url or buffer must be provided.
 
-type CodeDisplay struct {
-	Code     string `json:"code,omitempty"`
-	Language string `json:"language,omitempty"`
+type Image struct {
+	Url  string `json:"url,omitempty"`
+	Alt  string `json:"alt,omitempty"`
+	Size string `json:"size,omitempty"`
 }
 
-func (c CodeDisplay) Execute(input <-chan Message, output chan<- Message) (any, error) {
-	output <- Message{Type: "code", Data: c}
+func (c Image) Execute(input <-chan Message, output chan<- Message) (any, error) {
+	output <- Message{Type: "image", Data: c}
 	return nil, nil
 }
 
@@ -157,22 +159,113 @@ func (m MarkdownDisplay) Execute(input <-chan Message, output chan<- Message) (a
 	return nil, nil
 }
 
-// Implement other input and display types similarly...
+// LinkDisplay represents a button-styled action link
+type LinkDisplay struct {
+	Text string `json:"text"`
+	Url  string `json:"url"`
+	Type string `json:"type,omitempty"` // "default", "primary", "danger", etc.
+}
+
+func (l LinkDisplay) Execute(input <-chan Message, output chan<- Message) (any, error) {
+	output <- Message{Type: "link", Data: l}
+	return nil, nil
+}
+
+// HtmlDisplay represents rendered HTML content
+type HtmlDisplay struct {
+	Content string `json:"content"`
+}
+
+func (h HtmlDisplay) Execute(input <-chan Message, output chan<- Message) (any, error) {
+	output <- Message{Type: "html", Data: h}
+	return nil, nil
+}
+
+// CodeDisplay represents a block of code (already implemented, shown here for completeness)
+type CodeDisplay struct {
+	Code     string `json:"code"`
+	Language string `json:"language,omitempty"`
+}
+
+func (c CodeDisplay) Execute(input <-chan Message, output chan<- Message) (any, error) {
+	output <- Message{Type: "code", Data: c}
+	return nil, nil
+}
+
+// MetadataItem represents a single label/value pair in the metadata display
+type MetadataItem struct {
+	Label string `json:"label"`
+	Value string `json:"value"`
+}
+
+// MetadataDisplay represents a series of label/value pairs
+type MetadataDisplay struct {
+	Items  []MetadataItem `json:"items"`
+	Layout string         `json:"layout,omitempty"` // "default", "card", "table", etc.
+}
+
+func (m MetadataDisplay) Execute(input <-chan Message, output chan<- Message) (any, error) {
+	output <- Message{Type: "metadata", Data: m}
+	return nil, nil
+}
+
+// Now, let's add methods to the Display struct to use these new types
+
+func (d *Display) Link(text string, url string, options ...func(*LinkDisplay)) {
+	link := &LinkDisplay{Text: text, Url: url}
+	for _, option := range options {
+		option(link)
+	}
+	d.io.AddToStack(link)
+}
+
+func (d *Display) Html(content string) {
+	d.io.AddToStack(HtmlDisplay{Content: content})
+}
+
+func (d *Display) Metadata(items []MetadataItem, options ...func(*MetadataDisplay)) {
+	metadata := &MetadataDisplay{Items: items}
+	for _, option := range options {
+		option(metadata)
+	}
+	d.io.AddToStack(metadata)
+}
+
+// Option functions for customization
+
+func WithLinkType(linkType string) func(*LinkDisplay) {
+	return func(l *LinkDisplay) {
+		l.Type = linkType
+	}
+}
+
+func WithMetadataLayout(layout string) func(*MetadataDisplay) {
+	return func(m *MetadataDisplay) {
+		m.Layout = layout
+	}
+}
 
 // Group combines multiple I/O method calls
 type Group struct {
 	Elements []Executable
 }
 
-func (g Group) Execute(input <-chan Message, output chan<- Message) error {
+func (g Group) Execute(input <-chan Message, output chan<- Message) (any, error) {
 	output <- Message{Type: "group", Data: g}
-	return nil
+	return nil, nil
 }
 
 // AddToStack adds the element to the stack and executes it -- returning the result of the execution
 func (io *Io) AddToStack(element Executable) (any, error) {
 	io.stack = append(io.stack, element)
 	return element.Execute(io.input, io.output)
+}
+
+func (d *Display) Group(elements ...Executable) {
+	d.io.AddToStack(Group{Elements: elements})
+}
+func (d *Display) Image(url string, alt string, size string) {
+	d.io.AddToStack(Image{Url: url, Alt: alt, Size: size})
 }
 
 func (d *Display) Heading(text string, level int) {
@@ -219,6 +312,22 @@ func (i *Input) Boolean(label string, options ...func(*BooleanInput)) (bool, err
 	return b, nil
 }
 
+func (i *Input) Number(label string, options ...func(*NumberInput)) (int, error) {
+	input := &NumberInput{InputBase: InputBase{Label: label}}
+	for _, option := range options {
+		option(input)
+	}
+	v, err := i.io.AddToStack(input)
+	if err != nil {
+		return 0, err
+	}
+	n, err := strconv.Atoi(v.(string))
+	if err != nil {
+		return 0, fmt.Errorf("expected number, got %T: %w", v, err)
+	}
+	return n, nil
+}
+
 // Implement other input methods similarly...
 
 // WithHelpText is an option function to set the help text of an input
@@ -241,5 +350,3 @@ func WithRequired(required bool) func(*InputBase) {
 		i.Required = required
 	}
 }
-
-// Add more option functions as needed...

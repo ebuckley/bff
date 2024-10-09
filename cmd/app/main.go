@@ -4,6 +4,7 @@ import (
 	"bff/pkg/bff"
 	"bff/pkg/server"
 	"context"
+	"fmt"
 	"log/slog"
 	"net/http"
 	"time"
@@ -13,12 +14,40 @@ func main() {
 	slog.SetLogLoggerLevel(slog.LevelDebug)
 	app := bff.New("development")
 	err := app.RegisterAction("hello", func(ctx context.Context, io *bff.Io) error {
+
 		io.Display.Heading("Hello World!", 1)
+		io.Display.Image("https://media.giphy.com/media/26ybw6AltpBRmyS76/giphy.gif", "gopher", "medium")
+
+		io.Display.Link("Visit Go's website", "https://golang.org", bff.WithLinkType("primary"))
+
+		io.Display.Html("<p>This is <strong>HTML</strong> content rendered directly.</p>")
+
+		io.Display.Code(`
+package main
+
+import "fmt"
+
+func main() {
+    fmt.Println("Hello, BFF!")
+}
+    `, "go")
+
+		// New Metadata component
+		io.Display.Metadata([]bff.MetadataItem{
+			{Label: "Framework", Value: "BFF"},
+			{Label: "Language", Value: "Go"},
+			{Label: "Purpose", Value: "Backend for Frontend"},
+		}, bff.WithMetadataLayout("card"))
+
+		// Existing input component
 		name, err := io.Input.Text("What is your name?")
 		if err != nil {
 			return err
 		}
+
+		// Existing heading component
 		io.Display.Heading("Hello, "+name, 1)
+
 		return nil
 	})
 	if err != nil {
@@ -45,24 +74,22 @@ In this example you will see a few cool things like Yes/No booleans, text inputs
 		if err != nil {
 			return err
 		}
-		civiliansTarget, err := io.Input.Boolean("spare civilians?")
+		killCivvies, err := io.Input.Boolean("spare civilians?")
 		if err != nil {
 			return err
 		}
-		io.Display.Heading("Launching it in 10s", 1)
-		time.Sleep(5 * time.Second)
-		io.Display.Heading("Launching it in 5", 1)
-		time.Sleep(1 * time.Second)
-		io.Display.Heading("Launching in 4", 1)
-		time.Sleep(1 * time.Second)
-		io.Display.Heading("Launching in 3", 1)
-		time.Sleep(1 * time.Second)
-		io.Display.Heading("Launching in 2", 1)
-		time.Sleep(1 * time.Second)
-		io.Display.Heading("Launching in 1", 1)
-		time.Sleep(1 * time.Second)
+
+		countDown, err := io.Input.Number("How many seconds until launch?")
+		if err != nil {
+			return err
+		}
+		for i := countDown; i > 0; i-- {
+			io.Display.Heading(fmt.Sprintf("Launching it in %ds", i), 1)
+			time.Sleep(1 * time.Second)
+		}
+
 		io.Display.Heading("Great job destroying "+city, 1)
-		if !civiliansTarget {
+		if !killCivvies {
 			io.Display.Heading("You spared the civilians, you are a good person", 2)
 		}
 		io.Display.Markdown(`

@@ -128,7 +128,8 @@ func (b *BFF) Loop(ctx context.Context, input <-chan Message, output chan<- Mess
 					slog.Error("failed to execute action: ", "err", err)
 					return
 				}
-				return
+				// finished the action
+				output <- Message{Type: "done", Data: name}
 			}
 		}
 	}

@@ -3,7 +3,6 @@ package bff
 import (
 	"context"
 	"errors"
-	"fmt"
 )
 
 var ErrActionAlreadyExists = errors.New("action already exists")
@@ -30,8 +29,4 @@ func NewAction(name string, handler HandlerFunc, opts ...ActionOption) *Action {
 		opt(action)
 	}
 	return action
-}
-
-func (a *Action) Render() string {
-	return fmt.Sprintf(`{"Name": "%s", "Description": "%s"}`, a.Name, a.Description)
 }
