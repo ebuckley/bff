@@ -9,10 +9,11 @@ Writing internal tools sucks. You just want a few dumb buttons and grids of outp
 - blog post about this prototype
 - landing page for this tool
 - make it so that inputs are responded to by the backend after the message is recieved: I.E  synchronous response from backend for a submitted message
+  - Make it reload from half finished state (I.E resume after reconnection/service restart) 
 - make a button to reconnect to the socket
 - lots of io componetns TODO see io.go
 - documentation for people that want to pull this in as a library
 - deploy it somewhere
-- 
+
 # done
 - more pretty styles that change input state based on submitting it or not

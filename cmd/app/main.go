@@ -13,7 +13,74 @@ import (
 func main() {
 	slog.SetLogLoggerLevel(slog.LevelDebug)
 	app := bff.New("development")
-	err := app.RegisterAction("hello", func(ctx context.Context, io *bff.Io) error {
+	err := app.RegisterAction("upload a file", func(ctx context.Context, io *bff.Io) error {
+		f, err := io.Input.File("Upload a file", bff.WithAccept("*/*"), bff.WithMultiple(false))
+		if err != nil {
+			return err
+		}
+		io.Display.Metadata([]bff.MetadataItem{
+			{Label: "File Name", Value: f[0]},
+		})
+		return nil
+	})
+	if err != nil {
+		panic(err)
+	}
+
+	err = app.RegisterAction("user_profile", func(ctx context.Context, io *bff.Io) error {
+		email, err := io.Input.Email("Enter your email")
+		if err != nil {
+			return err
+		}
+
+		age, err := io.Input.Slider("Select your age", 18, 100, bff.WithStep(1))
+		if err != nil {
+			return err
+		}
+
+		birthdate, err := io.Input.Date("Enter your birthdate", bff.WithDateRange("1900-01-01", "2023-12-31"))
+		if err != nil {
+			return err
+		}
+
+		bio, err := io.Input.RichText("Enter your bio", bff.WithInitialValue("Tell us about yourself..."))
+		if err != nil {
+			return err
+		}
+
+		website, err := io.Input.URL("Enter your website")
+		if err != nil {
+			return err
+		}
+
+		availableTime, err := io.Input.Time("Select your available time", bff.WithTimeRange("09:00", "17:00"))
+		if err != nil {
+			return err
+		}
+
+		avatar, err := io.Input.File("Upload your avatar", bff.WithAccept("image/*"), bff.WithMultiple(false))
+		if err != nil {
+			return err
+		}
+
+		// just display it as metadata for now
+		io.Display.Metadata([]bff.MetadataItem{
+			{Label: "Email", Value: email},
+			{Label: "Age", Value: fmt.Sprint(age)},
+			{Label: "Birthdate", Value: fmt.Sprint(birthdate)},
+			{Label: "Bio", Value: bio},
+			{Label: "Website", Value: website},
+			{Label: "Available Time", Value: fmt.Sprint(availableTime)},
+			{Label: "Avatar", Value: fmt.Sprint(avatar)},
+		}, bff.WithMetadataLayout("table"))
+
+		return nil
+	})
+	if err != nil {
+		panic(err)
+	}
+
+	err = app.RegisterAction("hello", func(ctx context.Context, io *bff.Io) error {
 
 		io.Display.Heading("Hello World!", 1)
 		io.Display.Image("https://media.giphy.com/media/26ybw6AltpBRmyS76/giphy.gif", "gopher", "medium")

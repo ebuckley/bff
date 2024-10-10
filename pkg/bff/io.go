@@ -3,6 +3,7 @@ package bff
 import (
 	"fmt"
 	"strconv"
+	"time"
 )
 
 type Io struct {
@@ -44,15 +45,17 @@ type Executable interface {
 // - Group: Combines multiple I/O method calls into a single form.
 // - input.Text requests a string value
 // - input.boolean requests a boolean value
-// TODO:
 // - input.number requests a number value
+
+// TODO:
 // - input.email requests an email value
 // - input.slider requests a number value within a range
 // - input.date requests a date value
 // - input.richText requests a rich text value
 // - input.url requests a URL value
-// - input.time requests a time value
+// - input.time requests a date with time value
 // - input.file requests a file value
+
 // - input.confirm requests confirmation of an action using a full screen dialog box
 // - input.confirmIdentity (multi factor with the users email)
 // - input.search search for arbitrary results using a search box
@@ -121,9 +124,9 @@ func (h *NumberInput) Execute(input <-chan Message, output chan<- Message) (any,
 // - display.link Displays a button-styled action link to the action user. Can link to an external URL or to another action.
 // - display.metadata Displays a series of label/value pairs in a variety of layout options.
 // - display.code Displays a block of code to the action user.
+// - display.html Displays rendered HTML to the action user.
 
 // TODO:
-// - display.html Displays rendered HTML to the action user.
 // - display.grid  Displays data in a grid layout https://interval.com/docs/io-methods/display-grid
 // - display.object Displays an object of nested data to the action user.
 // - display.table Displays tabular data.
@@ -348,5 +351,252 @@ func WithPlaceholder(placeholder string) func(*InputBase) {
 func WithRequired(required bool) func(*InputBase) {
 	return func(i *InputBase) {
 		i.Required = required
+	}
+}
+
+// EmailInput represents an email input field
+type EmailInput struct {
+	InputBase
+}
+
+// SliderInput represents a slider input for number values within a range
+type SliderInput struct {
+	InputBase
+	Min  float64 `json:"min"`
+	Max  float64 `json:"max"`
+	Step float64 `json:"step,omitempty"`
+}
+
+// DateInput represents a date input field
+type DateInput struct {
+	InputBase
+	Min string `json:"min,omitempty"` // ISO 8601 date format (YYYY-MM-DD)
+	Max string `json:"max,omitempty"` // ISO 8601 date format (YYYY-MM-DD)
+}
+
+// RichTextInput represents a rich text input field
+type RichTextInput struct {
+	InputBase
+	InitialValue string `json:"initialValue,omitempty"`
+}
+
+// URLInput represents a URL input field
+type URLInput struct {
+	InputBase
+}
+
+// TimeInput represents a time input field
+type TimeInput struct {
+	InputBase
+	Min string `json:"min,omitempty"` // HH:mm format
+	Max string `json:"max,omitempty"` // HH:mm format
+}
+
+// FileInput represents a file input field
+type FileInput struct {
+	InputBase
+	Accept   string `json:"accept,omitempty"` // MIME types or file extensions
+	Multiple bool   `json:"multiple,omitempty"`
+}
+
+// Implement Execute method for each new input type
+func (e *EmailInput) Execute(input <-chan Message, output chan<- Message) (any, error) {
+	output <- Message{Type: "emailInput", Data: e}
+	m := <-input
+	if m.Type != "input" {
+		return nil, fmt.Errorf("expected input, got %s", m.Type)
+	}
+	return m.Data, nil
+}
+
+func (s *SliderInput) Execute(input <-chan Message, output chan<- Message) (any, error) {
+	output <- Message{Type: "sliderInput", Data: s}
+	m := <-input
+	if m.Type != "input" {
+		return nil, fmt.Errorf("expected input, got %s", m.Type)
+	}
+	return m.Data, nil
+}
+
+func (d *DateInput) Execute(input <-chan Message, output chan<- Message) (any, error) {
+	output <- Message{Type: "dateInput", Data: d}
+	m := <-input
+	if m.Type != "input" {
+		return nil, fmt.Errorf("expected input, got %s", m.Type)
+	}
+	return m.Data, nil
+}
+
+func (r *RichTextInput) Execute(input <-chan Message, output chan<- Message) (any, error) {
+	output <- Message{Type: "richTextInput", Data: r}
+	m := <-input
+	if m.Type != "input" {
+		return nil, fmt.Errorf("expected input, got %s", m.Type)
+	}
+	return m.Data, nil
+}
+
+func (u *URLInput) Execute(input <-chan Message, output chan<- Message) (any, error) {
+	output <- Message{Type: "urlInput", Data: u}
+	m := <-input
+	if m.Type != "input" {
+		return nil, fmt.Errorf("expected input, got %s", m.Type)
+	}
+	return m.Data, nil
+}
+
+func (t *TimeInput) Execute(input <-chan Message, output chan<- Message) (any, error) {
+	output <- Message{Type: "timeInput", Data: t}
+	m := <-input
+	if m.Type != "input" {
+		return nil, fmt.Errorf("expected input, got %s", m.Type)
+	}
+	return m.Data, nil
+}
+
+func (f *FileInput) Execute(input <-chan Message, output chan<- Message) (any, error) {
+	output <- Message{Type: "fileInput", Data: f}
+	m := <-input
+	if m.Type != "input" {
+		return nil, fmt.Errorf("expected input, got %s", m.Type)
+	}
+	return m.Data, nil
+}
+
+// Add new methods to the Input struct
+func (i *Input) Email(label string, options ...func(*EmailInput)) (string, error) {
+	input := &EmailInput{InputBase: InputBase{Label: label}}
+	for _, option := range options {
+		option(input)
+	}
+	v, err := i.io.AddToStack(input)
+	if err != nil {
+		return "", err
+	}
+	return v.(string), nil
+}
+
+func (i *Input) Slider(label string, min, max float64, options ...func(*SliderInput)) (float64, error) {
+	input := &SliderInput{InputBase: InputBase{Label: label}, Min: min, Max: max}
+	for _, option := range options {
+		option(input)
+	}
+	v, err := i.io.AddToStack(input)
+	if err != nil {
+		return 0, err
+	}
+	return v.(float64), nil
+}
+
+func (i *Input) Date(label string, options ...func(*DateInput)) (time.Time, error) {
+	input := &DateInput{InputBase: InputBase{Label: label}}
+	for _, option := range options {
+		option(input)
+	}
+	v, err := i.io.AddToStack(input)
+	if err != nil {
+		return time.Time{}, err
+	}
+	return time.Parse("2006-01-02", v.(string))
+}
+
+func (i *Input) RichText(label string, options ...func(*RichTextInput)) (string, error) {
+	input := &RichTextInput{InputBase: InputBase{Label: label}}
+	for _, option := range options {
+		option(input)
+	}
+	v, err := i.io.AddToStack(input)
+	if err != nil {
+		return "", err
+	}
+	return v.(string), nil
+}
+
+func (i *Input) URL(label string, options ...func(*URLInput)) (string, error) {
+	input := &URLInput{InputBase: InputBase{Label: label}}
+	for _, option := range options {
+		option(input)
+	}
+	v, err := i.io.AddToStack(input)
+	if err != nil {
+		return "", err
+	}
+	return v.(string), nil
+}
+
+func (i *Input) Time(label string, options ...func(*TimeInput)) (time.Time, error) {
+	input := &TimeInput{InputBase: InputBase{Label: label}}
+	for _, option := range options {
+		option(input)
+	}
+	v, err := i.io.AddToStack(input)
+	if err != nil {
+		return time.Time{}, err
+	}
+	// parse
+	return time.Parse("15:04", v.(string))
+}
+
+func (i *Input) File(label string, options ...func(*FileInput)) ([]string, error) {
+	input := &FileInput{InputBase: InputBase{Label: label}}
+	for _, option := range options {
+		option(input)
+	}
+	v, err := i.io.AddToStack(input)
+	if err != nil {
+		return nil, err
+	}
+	arr, ok := v.([]any)
+	if !ok {
+		return nil, fmt.Errorf("expected []string, got %T", v)
+	}
+	files := make([]string, 0, len(arr))
+	for _, r := range arr {
+		str, ok := r.(string)
+		if !ok {
+			return nil, fmt.Errorf("expected string, got %T", r)
+		}
+		files = append(files, str)
+	}
+
+	return files, nil
+}
+
+// Option functions for customization
+func WithStep(step float64) func(*SliderInput) {
+	return func(s *SliderInput) {
+		s.Step = step
+	}
+}
+
+func WithDateRange(min, max string) func(*DateInput) {
+	return func(d *DateInput) {
+		d.Min = min
+		d.Max = max
+	}
+}
+
+func WithInitialValue(value string) func(*RichTextInput) {
+	return func(r *RichTextInput) {
+		r.InitialValue = value
+	}
+}
+
+func WithTimeRange(min, max string) func(*TimeInput) {
+	return func(t *TimeInput) {
+		t.Min = min
+		t.Max = max
+	}
+}
+
+func WithAccept(accept string) func(*FileInput) {
+	return func(f *FileInput) {
+		f.Accept = accept
+	}
+}
+
+func WithMultiple(multiple bool) func(*FileInput) {
+	return func(f *FileInput) {
+		f.Multiple = multiple
 	}
 }

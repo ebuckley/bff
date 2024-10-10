@@ -1,57 +1,20 @@
 import './App.css'
-import {create} from 'zustand'
 import React, {useEffect, useState} from "react";
 import {marked} from "marked";
 import SyntaxHighlighter from 'react-syntax-highlighter';
 import {atomDark} from "react-syntax-highlighter/src/styles/prism/index.js";
-
-const backend = import.meta.env.VITE_BACKEND_URL || 'localhost:8181'
-
-const useAppState = create((set, get) => ({
-    pages: [],
-    actions: [],
-    currentAction: null,
-    cards: [],
-    history: [],
-    startAction: (name) => {
-        const msg = {type: 'start', data: name}
-        set((state) => ({...state, history: [...state.history, msg], currentAction: name,  cards: []}))
-        get().socket.send(JSON.stringify(msg))
-    },
-    sendInput: (value) => {
-        const msg = {type: 'input', data: value}
-        set((state) => ({...state, history: [...state.history, msg]}))
-        get().socket.send(JSON.stringify(msg))
-    }
-}))
+import {Commitable} from "./util/components.jsx";
+import {FileInput} from "./inputs/FileInput.jsx";
+import {EmailInput} from "./inputs/EmailInput.jsx";
+import {DateInput} from "./inputs/DateInput.jsx";
+import {RichTextInput} from "./inputs/RichTextInput.jsx";
+import {URLInput} from "./inputs/URLInput.jsx";
+import {TimeInput} from "./inputs/TimeInput.jsx";
+import {SliderInput} from "./inputs/SliderInput.jsx";
+import {backend, useAppState} from "./util/state.js";
 
 
 console.log('Backend URL:', backend)
-
-
-const Commitable = ({ onCommit, content }) => {
-    const [hasCommitted, setHasCommitted] = useState(false);
-
-    return (
-        <div className={"flex flex-col"}>
-            {React.isValidElement(content) ? content : null}
-            {hasCommitted ? (
-                <p className={"text-sm text-gray-500"}>Submitted</p>
-            ) : (
-                <button
-                    className={"border-2 border-gray-900 px-4 py-2 rounded hover:bg-amber-600 transition-all"}
-                    onClick={() => {
-                        onCommit();
-                        setHasCommitted(true);
-                    }}
-                >
-                    Submit
-            </button>
-            )}
-    </div>
-    );
-};
-
 const displayable = {
     'image': ({url, alt}) => <img src={url} alt={alt}/>,
     'display': ({text, level}) => {
@@ -66,7 +29,6 @@ const displayable = {
 
         const commitSend = () => {
             sendInput(value)
-            setHasCommitted(true)
         }
         return (
             <Commitable onCommit={() => sendInput(value)} content={<>
@@ -85,7 +47,6 @@ const displayable = {
 
         const commitSend = () => {
             sendInput(value)
-            setHasCommitted(true)
         }
         return (
             <Commitable onCommit={() => sendInput(value)} content={<>
@@ -172,6 +133,13 @@ const displayable = {
             </div>
         );
     },
+    'emailInput': EmailInput,
+    'sliderInput': SliderInput,
+    'dateInput': DateInput,
+    'richTextInput': RichTextInput,
+    'urlInput': URLInput,
+    'timeInput': TimeInput,
+    'fileInput': FileInput,
 }
 
 function setupWebSocket() {
@@ -222,7 +190,10 @@ function setupWebSocket() {
 
 function App() {
     const app = useAppState()
-
+    const errors = app.history.filter((msg) => msg.type === 'error').map((msg,i) => (
+    <div key={i} className="py-6 px-3 bg-red-400 color-red-900 rounded border-2 border-red-900">
+        <span className={"font-bold pr-1"}> Error </span> {msg.data}
+    </div>))
     useEffect(() => {
         const socket = setupWebSocket()
         return () => {
@@ -233,6 +204,9 @@ function App() {
     }, [])
     return (
         <div className={"py-6 mx-auto max-w-2xl"}>
+            <div className="flex flex-col gap-2 pb-3">
+                {errors}
+            </div>
             <div className={"flex flex-col gap-2 pb-6"}>
                 {app.cards.map((card, i) => {
                     const Displayable = displayable[card.type]
