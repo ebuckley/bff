@@ -1,6 +1,8 @@
 import {create} from "zustand";
 
-export const backend = import.meta.env.VITE_BACKEND_URL || 'localhost:8181'
+export const backend = `${window.location.host}${window.location.pathname}/ws`
+
+export const actionName = window.location.pathname.split('/').pop()
 
 export const useAppState = create((set, get) => ({
     pages: [],

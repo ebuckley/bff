@@ -12,7 +12,7 @@ import (
 
 func main() {
 	slog.SetLogLoggerLevel(slog.LevelDebug)
-	app := bff.New("development")
+	app := bff.New("")
 	err := app.RegisterAction("upload a file", func(ctx context.Context, io *bff.Io) error {
 		f, err := io.Input.File("Upload a file", bff.WithAccept("*/*"), bff.WithMultiple(false))
 		if err != nil {
@@ -171,8 +171,18 @@ In this example you will see a few cool things like Yes/No booleans, text inputs
 	})
 	s := server.Server{BFF: app}
 	slog.Info("starting server on :8181")
-	err = http.ListenAndServe(":8181", &s)
+	h := s.Handler()
+	err = http.ListenAndServe(":8181", logger(h))
 	if err != nil {
 		panic(err)
 	}
+}
+
+// logger is a basic http request logger
+// TODO should this be the concern of the library code instead??? probably
+func logger(h http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		slog.Debug("request", "method", r.Method, "path", r.URL.Path)
+		h.ServeHTTP(w, r)
+	})
 }

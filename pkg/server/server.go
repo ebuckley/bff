@@ -7,14 +7,90 @@ import (
 	"github.com/coder/websocket/wsjson"
 	"log/slog"
 	"net/http"
+	"net/http/httputil"
+	"net/url"
+	"strings"
 )
+
+var development bool
 
 type Server struct {
 	BFF     *bff.BFF
 	session map[string]*websocket.Conn
+	mux     http.Handler
 }
 
-func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+func (s *Server) Handler() http.Handler {
+
+	//  TODO make configurable depending on prod or dev build
+	development = true
+
+	mux := http.NewServeMux()
+
+	// basic URL scheme is:
+	// / -> index.html
+	// /e/{environment} -> index page for environment
+	// /e/{environment}/{a} -> environment specific action
+	// /a/{a} -> action
+	mux.HandleFunc("/", s.index)
+	mux.HandleFunc("/e/{environment}", s.index)
+	mux.HandleFunc("/e/{environment}/a/{action}", s.action)
+	mux.HandleFunc("/a/{action}", s.action)
+	mux.HandleFunc("/a/{action}/ws", s.handleAction)
+
+	s.mux = mux
+	return mux
+}
+
+func (s *Server) getParams(w http.ResponseWriter, r *http.Request) (env, action string) {
+	env = r.PathValue("environment")
+	action = r.PathValue("action")
+	return
+}
+
+func (s *Server) index(w http.ResponseWriter, r *http.Request) {
+	if r.URL.Path != "/" || !strings.Contains("/e/", r.URL.Path) {
+		if development {
+			viteDevServerURL, _ := url.Parse("http://localhost:5173") // Default Vite dev server address
+			viteProxy := httputil.NewSingleHostReverseProxy(viteDevServerURL)
+			viteProxy.ServeHTTP(w, r)
+		} else {
+			http.Error(w, "not found", http.StatusNotFound)
+		}
+		return
+
+	}
+	env, _ := s.getParams(w, r)
+	slog.Debug("serving index for environment: ", "env", env)
+	thisEnvironment := s.BFF.GetEnvironment()
+	if env != thisEnvironment {
+		slog.Error("environment not matching current environment: ", "env", env, "thisEnvironment", thisEnvironment)
+		http.Error(w, "environment not found", http.StatusNotFound)
+		return
+	}
+
+	state := struct {
+		Heading string
+		Actions []*bff.Action
+	}{
+		Heading: "Actions",
+		Actions: s.BFF.GetActions(),
+	}
+	err := index.Execute(w, state)
+	if err != nil {
+
+	}
+}
+
+func (s *Server) action(w http.ResponseWriter, r *http.Request) {
+	if development {
+		viteDevServerURL, _ := url.Parse("http://localhost:5173") // Default Vite dev server address
+		viteProxy := httputil.NewSingleHostReverseProxy(viteDevServerURL)
+		viteProxy.ServeHTTP(w, r)
+	}
+}
+
+func (s *Server) handleAction(w http.ResponseWriter, r *http.Request) {
 	// is this a websocket upgrade request?
 	if r.Header.Get("Upgrade") != "websocket" {
 		http.Error(w, "expected websocket connection", http.StatusBadRequest)

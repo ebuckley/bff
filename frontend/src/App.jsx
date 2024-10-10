@@ -11,7 +11,7 @@ import {RichTextInput} from "./inputs/RichTextInput.jsx";
 import {URLInput} from "./inputs/URLInput.jsx";
 import {TimeInput} from "./inputs/TimeInput.jsx";
 import {SliderInput} from "./inputs/SliderInput.jsx";
-import {backend, useAppState} from "./util/state.js";
+import {backend, useAppState, actionName} from "./util/state.js";
 
 
 console.log('Backend URL:', backend)
@@ -148,6 +148,8 @@ function setupWebSocket() {
     socket.onopen = () => {
         console.log('WebSocket connection established');
         socket.send('{"type": "ping"}');
+        const s = useAppState.getState()
+        s.startAction(actionName)
     };
 
     socket.onmessage = (event) => {
@@ -215,7 +217,7 @@ function App() {
             </div>
 
             {app.currentAction ? null : (<>
-                <h1 className={"text-4xl font-bold"}>Actions</h1>
+                <h1 className={"text-4xl font-bold"}>{backend}</h1>
                 <div className={"flex gap-2 pb-6"}>
                     {app.actions && app.actions.map((action, i) => (
                         <button
@@ -228,7 +230,7 @@ function App() {
             <details className="group border border-gray-200 rounded-lg shadow-sm">
                 <summary
                     className="flex justify-between items-center w-full px-4 py-2 text-left text-gray-700 font-medium cursor-pointer focus:outline-none">
-                    App State
+                    Debug App State
                     <svg
                         className="w-5 h-5 text-gray-500 transition-transform duration-200 group-open:rotate-180"
                         xmlns="http://www.w3.org/2000/svg"
@@ -240,6 +242,7 @@ function App() {
                     </svg>
                 </summary>
                 <div className="px-4 pb-4 text-sm text-gray-600">
+                    <div>Backend: {backend}</div>
                     <pre>{JSON.stringify(app, null, "  ")}</pre>
                 </div>
             </details>
