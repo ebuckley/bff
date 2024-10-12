@@ -1,10 +1,10 @@
 package main
 
 import (
-	"bff/pkg/bff"
-	"bff/pkg/server"
 	"context"
 	"fmt"
+	"github.com/ebuckley/bff/pkg/bff"
+	"github.com/ebuckley/bff/pkg/server"
 	"log/slog"
 	"net/http"
 	"time"

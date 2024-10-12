@@ -1,29 +1,29 @@
 package server
 
 import (
-	"bff/pkg/bff"
 	"context"
 	"github.com/coder/websocket"
 	"github.com/coder/websocket/wsjson"
+	"github.com/ebuckley/bff/pkg/bff"
 	"log/slog"
 	"net/http"
-	"net/http/httputil"
-	"net/url"
 	"strings"
 )
 
 var development bool
 
 type Server struct {
-	BFF     *bff.BFF
-	session map[string]*websocket.Conn
-	mux     http.Handler
+	BFF        *bff.BFF
+	session    map[string]*websocket.Conn
+	mux        http.Handler
+	assets     http.Handler
+	reactIndex http.Handler
 }
 
 func (s *Server) Handler() http.Handler {
 
 	//  TODO make configurable depending on prod or dev build
-	development = true
+	development = false
 
 	mux := http.NewServeMux()
 
@@ -32,10 +32,12 @@ func (s *Server) Handler() http.Handler {
 	// /e/{environment} -> index page for environment
 	// /e/{environment}/{a} -> environment specific action
 	// /a/{a} -> action
+	s.assets = makeStaticServer()
+	s.reactIndex = serveReactIndex()
 	mux.HandleFunc("/", s.index)
 	mux.HandleFunc("/e/{environment}", s.index)
-	mux.HandleFunc("/e/{environment}/a/{action}", s.action)
-	mux.HandleFunc("/a/{action}", s.action)
+	mux.Handle("/e/{environment}/a/{action}", s.reactIndex)
+	mux.Handle("/a/{action}", s.reactIndex)
 	mux.HandleFunc("/a/{action}/ws", s.handleAction)
 
 	s.mux = mux
@@ -50,15 +52,9 @@ func (s *Server) getParams(w http.ResponseWriter, r *http.Request) (env, action 
 
 func (s *Server) index(w http.ResponseWriter, r *http.Request) {
 	if r.URL.Path != "/" || !strings.Contains("/e/", r.URL.Path) {
-		if development {
-			viteDevServerURL, _ := url.Parse("http://localhost:5173") // Default Vite dev server address
-			viteProxy := httputil.NewSingleHostReverseProxy(viteDevServerURL)
-			viteProxy.ServeHTTP(w, r)
-		} else {
-			http.Error(w, "not found", http.StatusNotFound)
-		}
+		// fallback to the static file server
+		s.assets.ServeHTTP(w, r)
 		return
-
 	}
 	env, _ := s.getParams(w, r)
 	slog.Debug("serving index for environment: ", "env", env)
@@ -81,15 +77,6 @@ func (s *Server) index(w http.ResponseWriter, r *http.Request) {
 
 	}
 }
-
-func (s *Server) action(w http.ResponseWriter, r *http.Request) {
-	if development {
-		viteDevServerURL, _ := url.Parse("http://localhost:5173") // Default Vite dev server address
-		viteProxy := httputil.NewSingleHostReverseProxy(viteDevServerURL)
-		viteProxy.ServeHTTP(w, r)
-	}
-}
-
 func (s *Server) handleAction(w http.ResponseWriter, r *http.Request) {
 	// is this a websocket upgrade request?
 	if r.Header.Get("Upgrade") != "websocket" {
@@ -126,7 +113,7 @@ func (s *Server) handleAction(w http.ResponseWriter, r *http.Request) {
 
 		return
 	}
-	err = send(ctx, c, bff.Message{"actions", actions})
+	err = send(ctx, c, bff.Message{Type: "actions", Data: actions})
 	if err != nil {
 		slog.Error("failed to write actions: ", "err", err)
 		c.Close(websocket.StatusInternalError, "failed to write actions")

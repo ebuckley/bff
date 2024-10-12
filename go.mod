@@ -1,4 +1,4 @@
-module bff
+module github.com/ebuckley/bff
 
 go 1.23.1
 
