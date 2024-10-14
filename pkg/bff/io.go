@@ -379,6 +379,10 @@ type RichTextInput struct {
 	InputBase
 	InitialValue string `json:"initialValue,omitempty"`
 }
+type TextAreaInput struct {
+	InputBase
+	InitialValue string `json:"initialValue,omitempty"`
+}
 
 // URLInput represents a URL input field
 type URLInput struct {
@@ -429,6 +433,15 @@ func (d *DateInput) Execute(input <-chan Message, output chan<- Message) (any, e
 
 func (r *RichTextInput) Execute(input <-chan Message, output chan<- Message) (any, error) {
 	output <- Message{Type: "richTextInput", Data: r}
+	m := <-input
+	if m.Type != "input" {
+		return nil, fmt.Errorf("expected input, got %s", m.Type)
+	}
+	return m.Data, nil
+}
+
+func (r *TextAreaInput) Execute(input <-chan Message, output chan<- Message) (any, error) {
+	output <- Message{Type: "textAreaInput", Data: r}
 	m := <-input
 	if m.Type != "input" {
 		return nil, fmt.Errorf("expected input, got %s", m.Type)
@@ -502,6 +515,18 @@ func (i *Input) Date(label string, options ...func(*DateInput)) (time.Time, erro
 
 func (i *Input) RichText(label string, options ...func(*RichTextInput)) (string, error) {
 	input := &RichTextInput{InputBase: InputBase{Label: label}}
+	for _, option := range options {
+		option(input)
+	}
+	v, err := i.io.AddToStack(input)
+	if err != nil {
+		return "", err
+	}
+	return v.(string), nil
+}
+
+func (i *Input) TextArea(label string, options ...func(*TextAreaInput)) (string, error) {
+	input := &TextAreaInput{InputBase: InputBase{Label: label}}
 	for _, option := range options {
 		option(input)
 	}

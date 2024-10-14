@@ -10,20 +10,23 @@ import (
 	"strings"
 )
 
+// TODO make configurable somehow, when turned on this flag means we will proxy to the vite app
 var development bool
 
 type Server struct {
 	BFF        *bff.BFF
-	session    map[string]*websocket.Conn
 	mux        http.Handler
 	assets     http.Handler
 	reactIndex http.Handler
 }
 
-func (s *Server) Handler() http.Handler {
+func NewServer(bff *bff.BFF) *Server {
+	s := &Server{BFF: bff}
+	s.setup()
+	return s
+}
 
-	//  TODO make configurable depending on prod or dev build
-	development = false
+func (s *Server) setup() http.Handler {
 
 	mux := http.NewServeMux()
 
@@ -42,6 +45,9 @@ func (s *Server) Handler() http.Handler {
 
 	s.mux = mux
 	return mux
+}
+func (s *Server) ServeHTTP(writer http.ResponseWriter, request *http.Request) {
+	s.mux.ServeHTTP(writer, request)
 }
 
 func (s *Server) getParams(w http.ResponseWriter, r *http.Request) (env, action string) {

@@ -12,6 +12,7 @@ import {URLInput} from "./inputs/URLInput.jsx";
 import {TimeInput} from "./inputs/TimeInput.jsx";
 import {SliderInput} from "./inputs/SliderInput.jsx";
 import {backend, useAppState, actionName} from "./util/state.js";
+import {TextAreaInput} from "./inputs/TextAreaInput.jsx";
 
 
 console.log('Backend URL:', backend)
@@ -140,6 +141,7 @@ const displayable = {
     'urlInput': URLInput,
     'timeInput': TimeInput,
     'fileInput': FileInput,
+    'textAreaInput': TextAreaInput,
 }
 
 function setupWebSocket() {

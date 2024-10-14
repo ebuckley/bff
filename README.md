@@ -14,6 +14,7 @@ Writing internal tools sucks. You just want a few dumb buttons and grids of outp
 - lots of io componetns TODO see io.go
 - documentation for people that want to pull this in as a library
 - deploy it somewhere
+- better option handling for inputs and outputs, they are a bit hodgepodge and inconsistent but some are common I.E labels on inputs
 
 # done
 - more pretty styles that change input state based on submitting it or not

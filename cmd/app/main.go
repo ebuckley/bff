@@ -43,7 +43,7 @@ func main() {
 			return err
 		}
 
-		bio, err := io.Input.RichText("Enter your bio", bff.WithInitialValue("Tell us about yourself..."))
+		bio, err := io.Input.TextArea("Tell us more about you")
 		if err != nil {
 			return err
 		}
@@ -169,10 +169,10 @@ In this example you will see a few cool things like Yes/No booleans, text inputs
 
 		return nil
 	})
-	s := server.Server{BFF: app}
+	s := server.NewServer(app)
 	slog.Info("starting server on :8181")
-	h := s.Handler()
-	err = http.ListenAndServe(":8181", logger(h))
+
+	err = http.ListenAndServe(":8181", logger(s))
 	if err != nil {
 		panic(err)
 	}
