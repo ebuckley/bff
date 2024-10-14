@@ -14,13 +14,16 @@ import (
 var development bool
 
 type Server struct {
-	BFF        *bff.BFF
-	mux        http.Handler
-	assets     http.Handler
-	reactIndex http.Handler
+	BFF           *bff.BFF
+	mux           http.Handler
+	assets        http.Handler
+	reactIndex    http.Handler
+	handlerPrefix string
 }
 
-func NewServer(bff *bff.BFF) *Server {
+// NewServer creates a new server with the given BFF instance and handler prefix, the handler prefix is an optional
+// string I.E `/dashboard` that will be prepended to all routes, you do not need to include a trailing slash on the prefix
+func NewServer(bff *bff.BFF, handlerPrefix string) *Server {
 	s := &Server{BFF: bff}
 	s.setup()
 	return s
@@ -29,7 +32,9 @@ func NewServer(bff *bff.BFF) *Server {
 func (s *Server) setup() http.Handler {
 
 	mux := http.NewServeMux()
-
+	if s.handlerPrefix != "" {
+		slog.Info("setup bff server with a prefix", "prefix", s.handlerPrefix)
+	}
 	// basic URL scheme is:
 	// / -> index.html
 	// /e/{environment} -> index page for environment
@@ -37,11 +42,12 @@ func (s *Server) setup() http.Handler {
 	// /a/{a} -> action
 	s.assets = makeStaticServer()
 	s.reactIndex = serveReactIndex()
-	mux.HandleFunc("/", s.index)
-	mux.HandleFunc("/e/{environment}", s.index)
-	mux.Handle("/e/{environment}/a/{action}", s.reactIndex)
-	mux.Handle("/a/{action}", s.reactIndex)
-	mux.HandleFunc("/a/{action}/ws", s.handleAction)
+
+	mux.HandleFunc(s.handlerPrefix+"/", s.index)
+	mux.HandleFunc(s.handlerPrefix+"/e/{environment}", s.index)
+	mux.Handle(s.handlerPrefix+"/e/{environment}/a/{action}", s.reactIndex)
+	mux.Handle(s.handlerPrefix+"/a/{action}", s.reactIndex)
+	mux.HandleFunc(s.handlerPrefix+"/a/{action}/ws", s.handleAction)
 
 	s.mux = mux
 	return mux
