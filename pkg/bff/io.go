@@ -71,6 +71,8 @@ type InputBase struct {
 	Required    bool   `json:"required,omitempty"`
 }
 
+type InputOption func(*InputBase)
+
 // TextInput is a text box input
 type TextInput struct {
 	InputBase
@@ -298,10 +300,10 @@ func (i *Input) Text(label string, options ...func(*TextInput)) (string, error) 
 	return s, nil
 }
 
-func (i *Input) Boolean(label string, options ...func(*BooleanInput)) (bool, error) {
+func (i *Input) Boolean(label string, options ...func(*InputBase)) (bool, error) {
 	input := &BooleanInput{InputBase: InputBase{Label: label}}
 	for _, option := range options {
-		option(input)
+		option(&input.InputBase)
 	}
 	v, err := i.io.AddToStack(input)
 	if err != nil {
@@ -476,10 +478,10 @@ func (f *FileInput) Execute(input <-chan Message, output chan<- Message) (any, e
 }
 
 // Add new methods to the Input struct
-func (i *Input) Email(label string, options ...func(*EmailInput)) (string, error) {
+func (i *Input) Email(label string, options ...InputOption) (string, error) {
 	input := &EmailInput{InputBase: InputBase{Label: label}}
 	for _, option := range options {
-		option(input)
+		option(&input.InputBase)
 	}
 	v, err := i.io.AddToStack(input)
 	if err != nil {
@@ -488,10 +490,10 @@ func (i *Input) Email(label string, options ...func(*EmailInput)) (string, error
 	return v.(string), nil
 }
 
-func (i *Input) Slider(label string, min, max float64, options ...func(*SliderInput)) (float64, error) {
+func (i *Input) Slider(label string, min, max float64, options ...InputOption) (float64, error) {
 	input := &SliderInput{InputBase: InputBase{Label: label}, Min: min, Max: max}
 	for _, option := range options {
-		option(input)
+		option(&input.InputBase)
 	}
 	v, err := i.io.AddToStack(input)
 	if err != nil {
@@ -500,10 +502,10 @@ func (i *Input) Slider(label string, min, max float64, options ...func(*SliderIn
 	return v.(float64), nil
 }
 
-func (i *Input) Date(label string, options ...func(*DateInput)) (time.Time, error) {
+func (i *Input) Date(label string, options ...InputOption) (time.Time, error) {
 	input := &DateInput{InputBase: InputBase{Label: label}}
 	for _, option := range options {
-		option(input)
+		option(&input.InputBase)
 	}
 	v, err := i.io.AddToStack(input)
 	if err != nil {
@@ -512,10 +514,10 @@ func (i *Input) Date(label string, options ...func(*DateInput)) (time.Time, erro
 	return time.Parse("2006-01-02", v.(string))
 }
 
-func (i *Input) RichText(label string, options ...func(*RichTextInput)) (string, error) {
+func (i *Input) RichText(label string, options ...InputOption) (string, error) {
 	input := &RichTextInput{InputBase: InputBase{Label: label}}
 	for _, option := range options {
-		option(input)
+		option(&input.InputBase)
 	}
 	v, err := i.io.AddToStack(input)
 	if err != nil {
@@ -524,10 +526,10 @@ func (i *Input) RichText(label string, options ...func(*RichTextInput)) (string,
 	return v.(string), nil
 }
 
-func (i *Input) TextArea(label string, options ...func(*TextAreaInput)) (string, error) {
+func (i *Input) TextArea(label string, options ...InputOption) (string, error) {
 	input := &TextAreaInput{InputBase: InputBase{Label: label}}
 	for _, option := range options {
-		option(input)
+		option(&input.InputBase)
 	}
 	v, err := i.io.AddToStack(input)
 	if err != nil {
@@ -536,10 +538,10 @@ func (i *Input) TextArea(label string, options ...func(*TextAreaInput)) (string,
 	return v.(string), nil
 }
 
-func (i *Input) URL(label string, options ...func(*URLInput)) (string, error) {
+func (i *Input) URL(label string, options ...func(*InputBase)) (string, error) {
 	input := &URLInput{InputBase: InputBase{Label: label}}
 	for _, option := range options {
-		option(input)
+		option(&input.InputBase)
 	}
 	v, err := i.io.AddToStack(input)
 	if err != nil {
@@ -548,10 +550,10 @@ func (i *Input) URL(label string, options ...func(*URLInput)) (string, error) {
 	return v.(string), nil
 }
 
-func (i *Input) Time(label string, options ...func(*TimeInput)) (time.Time, error) {
+func (i *Input) Time(label string, options ...InputOption) (time.Time, error) {
 	input := &TimeInput{InputBase: InputBase{Label: label}}
 	for _, option := range options {
-		option(input)
+		option(&input.InputBase)
 	}
 	v, err := i.io.AddToStack(input)
 	if err != nil {
@@ -561,10 +563,10 @@ func (i *Input) Time(label string, options ...func(*TimeInput)) (time.Time, erro
 	return time.Parse("15:04", v.(string))
 }
 
-func (i *Input) File(label string, options ...func(*FileInput)) ([]string, error) {
+func (i *Input) File(label string, options ...InputOption) ([]string, error) {
 	input := &FileInput{InputBase: InputBase{Label: label}}
 	for _, option := range options {
-		option(input)
+		option(&input.InputBase)
 	}
 	v, err := i.io.AddToStack(input)
 	if err != nil {
@@ -586,41 +588,5 @@ func (i *Input) File(label string, options ...func(*FileInput)) ([]string, error
 	return files, nil
 }
 
-// Option functions for customization
-func WithStep(step float64) func(*SliderInput) {
-	return func(s *SliderInput) {
-		s.Step = step
-	}
-}
-
-func WithDateRange(min, max string) func(*DateInput) {
-	return func(d *DateInput) {
-		d.Min = min
-		d.Max = max
-	}
-}
-
-func WithInitialValue(value string) func(*RichTextInput) {
-	return func(r *RichTextInput) {
-		r.InitialValue = value
-	}
-}
-
-func WithTimeRange(min, max string) func(*TimeInput) {
-	return func(t *TimeInput) {
-		t.Min = min
-		t.Max = max
-	}
-}
-
-func WithAccept(accept string) func(*FileInput) {
-	return func(f *FileInput) {
-		f.Accept = accept
-	}
-}
-
-func WithMultiple(multiple bool) func(*FileInput) {
-	return func(f *FileInput) {
-		f.Multiple = multiple
-	}
-}
+// TODO the option system needs to be extended here we really want to make it so that you can further configure things
+// 	like Files with the same stuff that inputOption can do but also aditional file specific things
