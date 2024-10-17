@@ -46,11 +46,12 @@ type Executable interface {
 // - input.Text requests a string value
 // - input.boolean requests a boolean value
 // - input.number requests a number value
-
-// TODO:
 // - input.email requests an email value
 // - input.slider requests a number value within a range
 // - input.date requests a date value
+// - input.textArea requests a text area value
+
+// TODO:
 // - input.richText requests a rich text value
 // - input.url requests a URL value
 // - input.time requests a date with time value
@@ -211,8 +212,6 @@ func (m MetadataDisplay) Execute(input <-chan Message, output chan<- Message) (a
 	output <- Message{Type: "metadata", Data: m}
 	return nil, nil
 }
-
-// Now, let's add methods to the Display struct to use these new types
 
 func (d *Display) Link(text string, url string, options ...func(*LinkDisplay)) {
 	link := &LinkDisplay{Text: text, Url: url}

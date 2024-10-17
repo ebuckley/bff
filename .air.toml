@@ -5,7 +5,7 @@ tmp_dir = "tmp"
 [build]
   args_bin = []
   bin = "./tmp/app"
-  cmd = "go build -o ./tmp/app ./cmd/app"
+  cmd = "go build -o ./tmp/app -ldflags=\"-X 'github.com/ebuckley/bff/pkg/server.development=true'\" ./cmd/app"
   delay = 100
   exclude_dir = ["assets", "tmp", "vendor", "testdata", "node_modules", "frontend"]
   exclude_file = []

@@ -48,9 +48,10 @@ const displayable = {
 
         const commitSend = () => {
             sendInput(value)
+            return true
         }
         return (
-            <Commitable onCommit={() => sendInput(value)} content={<>
+            <Commitable onCommit={commitSend} content={<>
                 <label className={"text-lg font-bold"}>{label}</label>
                 <input className={"border-gray-900 border-2 outline-2 outline-amber-600 px-4 py-2"}
                        onChange={(e) => setValue(e.target.value)} value={value}

@@ -17,7 +17,7 @@ var frontend embed.FS
 
 func serveReactIndex() http.Handler {
 	var viteProxy http.Handler
-	if development {
+	if development == "true" {
 		viteDevServerURL, _ := url.Parse("http://localhost:5173") // Default Vite dev server address
 		viteProxy = httputil.NewSingleHostReverseProxy(viteDevServerURL)
 		return viteProxy
@@ -45,7 +45,7 @@ func serveReactIndex() http.Handler {
 
 func makeStaticServer() http.Handler {
 	var viteProxy http.Handler
-	if development {
+	if development == "true" {
 		viteDevServerURL, _ := url.Parse("http://localhost:5173") // Default Vite dev server address
 		viteProxy = httputil.NewSingleHostReverseProxy(viteDevServerURL)
 		return viteProxy

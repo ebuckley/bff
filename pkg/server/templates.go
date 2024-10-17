@@ -13,7 +13,7 @@ var index = template.Must(template.New("index").Parse(`
  <h1 class="text-3xl font-bold mb-4">{{.Heading}}</h1>
  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
    {{range .Actions}}
-     <a href="/a/{{.Name}}" class="bg-blue-500 text-white text-lg font-bold py-4 px-6 rounded-lg hover:bg-blue-700">
+     <a href="/a/{{.Slug}}" class="bg-blue-500 text-white text-lg font-bold py-4 px-6 rounded-lg hover:bg-blue-700">
        {{.Name}}
      </a>
    {{end}}
