@@ -39,14 +39,12 @@ func (s *Server) setup() http.Handler {
 	}
 	if development == "true" {
 		slog.Info("development mode enabled, proxying to vite")
-	} else {
-		slog.Info("NOT IN DEV MODE WTF")
 	}
+
 	// basic URL scheme is:
 	// / -> index.html
-	// /e/{environment} -> index page for environment
-	// /e/{environment}/{a} -> environment specific action
-	// /a/{a} -> action
+	// /a/{a} -> action (a react app)
+	// /a/{a}/ws -> websocket for action to do stuff
 	s.assets = makeStaticServer()
 	s.reactIndex = serveReactIndex()
 

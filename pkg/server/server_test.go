@@ -25,7 +25,7 @@ func testBff(t *testing.T) *bff.BFF {
 
 func TestServer_SetPrefix(t *testing.T) {
 	bffInstance := testBff(t)
-	server := NewServer(bffInstance, bff.WithPrefix("/dashboard"))
+	server := NewServer(bffInstance, Prefix("/dashboard"))
 
 	if server.handlerPrefix != "/dashboard" {
 		t.Errorf("expected prefix to be /dashboard, got %s", server.handlerPrefix)
@@ -37,7 +37,7 @@ func TestServer_SetPrefix(t *testing.T) {
 
 func TestServer_ReturnIndexPage(t *testing.T) {
 	bffInstance := testBff(t)
-	server := NewServer(bffInstance, "")
+	server := NewServer(bffInstance)
 
 	req := httptest.NewRequest(http.MethodGet, "/", nil)
 	w := httptest.NewRecorder()
@@ -60,7 +60,7 @@ func TestServer_ReturnIndexPage(t *testing.T) {
 func TestServer_GetActionPage(t *testing.T) {
 	bffInstance := testBff(t)
 
-	server := NewServer(bffInstance, "")
+	server := NewServer(bffInstance)
 
 	req := httptest.NewRequest(http.MethodGet, "/a/some-action", nil)
 	w := httptest.NewRecorder()
@@ -76,7 +76,7 @@ func TestServer_GetActionPage(t *testing.T) {
 
 func TestServer_IndexPageWithPrefix(t *testing.T) {
 	bffInstance := testBff(t)
-	server := NewServer(bffInstance, "/dashboard")
+	server := NewServer(bffInstance, Prefix("/dashboard"))
 
 	req := httptest.NewRequest(http.MethodGet, "/dashboard/", nil)
 	w := httptest.NewRecorder()
@@ -91,7 +91,7 @@ func TestServer_IndexPageWithPrefix(t *testing.T) {
 
 func TestServer_InvalidEnvironment(t *testing.T) {
 	bffInstance := &bff.BFF{}
-	server := NewServer(bffInstance, "")
+	server := NewServer(bffInstance)
 
 	req := httptest.NewRequest(http.MethodGet, "/e/invalid-env", nil)
 	w := httptest.NewRecorder()
