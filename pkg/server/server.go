@@ -2,11 +2,12 @@ package server
 
 import (
 	"context"
+	"log/slog"
+	"net/http"
+
 	"github.com/coder/websocket"
 	"github.com/coder/websocket/wsjson"
 	"github.com/ebuckley/bff/pkg/bff"
-	"log/slog"
-	"net/http"
 )
 
 // TODO make configurable somehow, when turned on this flag means we will proxy to the vite app
@@ -59,11 +60,6 @@ func (s *Server) ServeHTTP(writer http.ResponseWriter, request *http.Request) {
 	s.mux.ServeHTTP(writer, request)
 }
 
-func (s *Server) getParams(w http.ResponseWriter, r *http.Request) (action string) {
-	action = r.PathValue("action")
-	return
-}
-
 func (s *Server) index(w http.ResponseWriter, r *http.Request) {
 	if r.URL.Path != s.handlerPrefix+"/" {
 		// fallback to the static file server
@@ -71,10 +67,12 @@ func (s *Server) index(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	state := struct {
+		Prefix  string
 		Heading string
 		Actions []*bff.Action
 	}{
 		Heading: "Actions",
+		Prefix:  s.handlerPrefix,
 		Actions: s.BFF.GetActions(),
 	}
 	err := index.Execute(w, state)
