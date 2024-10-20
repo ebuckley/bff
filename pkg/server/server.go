@@ -46,8 +46,8 @@ func (s *Server) setup() http.Handler {
 	// / -> index.html
 	// /a/{a} -> action (a react app)
 	// /a/{a}/ws -> websocket for action to do stuff
-	s.assets = makeStaticServer()
-	s.reactIndex = serveReactIndex()
+	s.assets = s.makeStaticServer()
+	s.reactIndex = serveReactIndex(s.handlerPrefix)
 
 	mux.HandleFunc(s.handlerPrefix+"/", s.index)
 	mux.Handle(s.handlerPrefix+"/a/{action}", s.reactIndex)

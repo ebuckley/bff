@@ -3,18 +3,19 @@ package main
 import (
 	"context"
 	"fmt"
-	"github.com/ebuckley/bff/pkg/bff"
-	"github.com/ebuckley/bff/pkg/server"
 	"log/slog"
 	"net/http"
 	"time"
+
+	"github.com/ebuckley/bff/pkg/bff"
+	"github.com/ebuckley/bff/pkg/server"
 )
 
 func main() {
 	slog.SetLogLoggerLevel(slog.LevelDebug)
 	app := bff.New()
 	err := app.RegisterAction("upload a file", func(ctx context.Context, io *bff.Io) error {
-		f, err := io.Input.File("Upload a file", bff.WithAccept("*/*"), bff.WithMultiple(false))
+		f, err := io.Input.File("Upload a file")
 		if err != nil {
 			return err
 		}
@@ -33,12 +34,12 @@ func main() {
 			return err
 		}
 
-		age, err := io.Input.Slider("Select your age", 18, 100, bff.WithStep(1))
+		age, err := io.Input.Slider("Select your age", 18, 100)
 		if err != nil {
 			return err
 		}
 
-		birthdate, err := io.Input.Date("Enter your birthdate", bff.WithDateRange("1900-01-01", "2023-12-31"))
+		birthdate, err := io.Input.Date("Enter your birthdate")
 		if err != nil {
 			return err
 		}
@@ -53,12 +54,12 @@ func main() {
 			return err
 		}
 
-		availableTime, err := io.Input.Time("Select your available time", bff.WithTimeRange("09:00", "17:00"))
+		availableTime, err := io.Input.Time("Select your available time")
 		if err != nil {
 			return err
 		}
 
-		avatar, err := io.Input.File("Upload your avatar", bff.WithAccept("image/*"), bff.WithMultiple(false))
+		avatar, err := io.Input.File("Upload your avatar")
 		if err != nil {
 			return err
 		}
@@ -122,7 +123,11 @@ func main() {
 	}
 
 	err = app.RegisterAction("launch nukes", launchNukes, bff.WithSlug("nuke"))
-	s := server.NewServer(app)
+	if err != nil {
+		panic(err)
+	}
+
+	s := server.NewServer(app, server.Prefix("/backend"))
 	slog.Info("starting server on :8181")
 
 	err = http.ListenAndServe(":8181", logger(s))
