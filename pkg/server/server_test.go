@@ -130,6 +130,13 @@ func TestServer_IndexPageWithPrefix(t *testing.T) {
 	if resp.StatusCode != http.StatusOK {
 		t.Errorf("expected status OK, got %v", resp.Status)
 	}
+	bodyResult, err := io.ReadAll(resp.Body)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(string(bodyResult), "/dashboard") {
+		t.Errorf("expected prefix in body, got %s", bodyResult)
+	}
 }
 
 func TestServer_InvalidEnvironment(t *testing.T) {
