@@ -146,7 +146,7 @@ const displayable = {
 }
 
 function setupWebSocket() {
-    const socket = new WebSocket(`ws://${backend}`);
+    const socket = new WebSocket(`${window.location.protocol === 'https:' ? 'wss' : 'ws'}://${backend}`);
 
     socket.onopen = () => {
         console.log('WebSocket connection established');
