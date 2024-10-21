@@ -220,11 +220,11 @@ func (d *Display) Link(text string, url string, options ...func(*LinkDisplay)) {
 	for _, option := range options {
 		option(link)
 	}
-	d.io.AddToStack(link)
+	_, _ = d.io.AddToStack(link)
 }
 
 func (d *Display) Html(content string) {
-	d.io.AddToStack(HtmlDisplay{Content: content})
+	_, _ = d.io.AddToStack(HtmlDisplay{Content: content})
 }
 
 func (d *Display) Metadata(items []MetadataItem, options ...func(*MetadataDisplay)) {
@@ -232,7 +232,7 @@ func (d *Display) Metadata(items []MetadataItem, options ...func(*MetadataDispla
 	for _, option := range options {
 		option(metadata)
 	}
-	d.io.AddToStack(metadata)
+	_, _ = d.io.AddToStack(metadata)
 }
 
 // Option functions for customization
@@ -266,22 +266,22 @@ func (io *Io) AddToStack(element Executable) (any, error) {
 }
 
 func (d *Display) Group(elements ...Executable) {
-	d.io.AddToStack(Group{Elements: elements})
+	_, _ = d.io.AddToStack(Group{Elements: elements})
 }
 func (d *Display) Image(url string, alt string, size string) {
-	d.io.AddToStack(Image{Url: url, Alt: alt, Size: size})
+	_, _ = d.io.AddToStack(Image{Url: url, Alt: alt, Size: size})
 }
 
 func (d *Display) Heading(text string, level int) {
-	d.io.AddToStack(HeadingDisplay{Text: text, Level: level})
+	_, _ = d.io.AddToStack(HeadingDisplay{Text: text, Level: level})
 }
 
 func (d *Display) Code(code string, language string) {
-	d.io.AddToStack(CodeDisplay{Code: code, Language: language})
+	_, _ = d.io.AddToStack(CodeDisplay{Code: code, Language: language})
 }
 
 func (d *Display) Markdown(content string) {
-	d.io.AddToStack(MarkdownDisplay{Content: content})
+	_, _ = d.io.AddToStack(MarkdownDisplay{Content: content})
 }
 
 func (i *Input) Text(label string, options ...func(*TextInput)) (string, error) {

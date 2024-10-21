@@ -12,10 +12,8 @@ type HandlerFunc func(ctx context.Context, io *Io) error
 
 type Action struct {
 	handler     HandlerFunc
-	display     chan string
-	input       chan any
 	Slug        string `json:"slug,omitempty"`
-	Name        string `json:"name" json:"name,omitempty"`
+	Name        string `json:"name,omitempty"`
 	Description string `json:"description,omitempty"`
 }
 

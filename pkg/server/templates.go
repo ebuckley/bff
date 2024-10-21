@@ -22,17 +22,3 @@ var index = template.Must(template.New("index").Parse(`
 </body>
 </html>
 `))
-
-var action = template.Must(template.New("action").Parse(`
-<!DOCTYPE html>
-<html>
-<head>
- <title>{{.Heading}}</title>
- <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
-</head>
-<body class="bg-gray-100 p-4">
- <h1 class="text-3xl font-bold mb-4">{{.Heading}}</h1>
- <div id="app"></div>
-</body>
-</html>
-`))

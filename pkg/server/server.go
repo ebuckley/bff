@@ -77,7 +77,8 @@ func (s *Server) index(w http.ResponseWriter, r *http.Request) {
 	}
 	err := index.Execute(w, state)
 	if err != nil {
-
+		slog.Error("failed to render index", "err", err)
+		http.Error(w, "failed to render index", http.StatusInternalServerError)
 	}
 }
 func (s *Server) handleAction(w http.ResponseWriter, r *http.Request) {
@@ -91,7 +92,12 @@ func (s *Server) handleAction(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "could not open websocket connection", http.StatusBadRequest)
 		return
 	}
-	defer c.CloseNow()
+	defer func(c *websocket.Conn) {
+		err := c.CloseNow()
+		if err != nil {
+			slog.Error("failed to close websocket connection", "err", err)
+		}
+	}(c)
 
 	// Set the context as needed. Use of r.Context() is not recommended
 	// to avoid surprising behavior (see http.Hijacker).
