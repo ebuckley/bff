@@ -115,6 +115,15 @@ func main() {
 
 		// Existing heading component
 		io.Display.Heading("Hello, "+name, 1)
+		io.Display.Markdown(`
+# Hello markdown
+
+You can use markdown to write things, whatever you want -- it just works!
+
+> You miss 100% of the shots you don't take. 
+>    - Wayne Gretzky - Michael Scott
+
+**That's all thanks!!**'`)
 
 		return nil
 	})

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import {Commitable} from "../util/components.jsx";
 import {useAppState} from "../util/state.js";
+import {Label} from "../ui/Label.jsx";
 
 export const RichTextInput = ({ label, helpText, initialValue }) => {
     const {sendInput} = useAppState();

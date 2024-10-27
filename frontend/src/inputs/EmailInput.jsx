@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import {Commitable} from "../util/components.jsx";
 import {useAppState} from "../util/state.js";
 import {Input} from "../ui/Input.jsx";
+import {Label} from "../ui/Label.jsx";
 
 export const EmailInput = ({ label, helpText, placeholder, required }) => {
     const {sendInput} = useAppState();
@@ -24,7 +25,7 @@ export const EmailInput = ({ label, helpText, placeholder, required }) => {
     return (
         <Commitable onCommit={handleCommit} content={
             <>
-
+                <Label>{label}</Label>
                 <Input
                     type="email"
                     onChange={handleChange}

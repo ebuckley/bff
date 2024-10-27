@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import {Commitable} from "../util/components.jsx";
 import {useAppState} from "../util/state.js";
-import {Input} from "postcss";
+import {Input} from "../ui/Input.jsx";
+import {Label} from "../ui/Label.jsx";
 
 export const URLInput = ({ label, helpText, placeholder, required, onCommit }) => {
     const [value, setValue] = useState('');

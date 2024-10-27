@@ -16,6 +16,7 @@ import {TextAreaInput} from "./inputs/TextAreaInput.jsx";
 import {Input} from "./ui/Input.jsx";
 import {Switch} from "./ui/Switch.jsx";
 import {Label} from "./ui/Label.jsx";
+import {Card, CardContent, CardHeader} from "./ui/Card.jsx";
 
 
 console.log('Backend URL:', backend)
@@ -117,7 +118,6 @@ const displayable = {
 
         const layoutStyles = {
             default: "bg-white p-4",
-            card: "bg-white shadow-md rounded-lg p-4",
             table: "table-auto",
         };
 
@@ -137,9 +137,12 @@ const displayable = {
         }
 
         return (
-            <div className={layoutStyles[layout] || layoutStyles.default}>
-                {renderItems()}
-            </div>
+            <Card className={layoutStyles[layout] || layoutStyles.default}>
+                <CardHeader></CardHeader>
+                <CardContent>
+                    {renderItems()}
+                </CardContent>
+            </Card>
         );
     },
     'emailInput': EmailInput,
@@ -225,17 +228,6 @@ function App() {
                     return <Displayable key={i} {...card.data} />
                 })}
             </div>
-
-            {app.currentAction ? null : (<>
-                <h1 className={"text-4xl font-bold"}>{backend}</h1>
-                <div className={"flex gap-2 pb-6"}>
-                    {app.actions && app.actions.map((action, i) => (
-                        <button
-                            className={"border-2 border-gray-900 px-4 py-2 rounded hover:bg-amber-600 transition-all"}
-                            key={action.name} onClick={() => app.startAction(action.name)}>{action.name}</button>
-                    ))}
-                </div>
-            </>)}
 
             <details className="group border border-gray-200 rounded-lg shadow-sm">
                 <summary

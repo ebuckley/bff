@@ -1,6 +1,8 @@
 import React, {useRef, useState} from 'react';
 import {Commitable} from "../util/components.jsx";
 import {useAppState} from "../util/state.js";
+import {Label} from "../ui/Label.jsx";
+import {Input} from "../ui/Input.jsx";
 
 export const FileInput = ({ label, helpText, accept, multiple }) => {
     const fileInputRef = useRef(null);
@@ -24,10 +26,9 @@ export const FileInput = ({ label, helpText, accept, multiple }) => {
         <Commitable onCommit={commit} content={
             <>
                 <Label>{label}</Label>
-                <input
+                <Input
                     type="file"
                     ref={fileInputRef}
-                    className="border-gray-900 border-2 outline-2 outline-amber-600 px-4 py-2"
                     onChange={handleChange}
                     accept={accept}
                     multiple={multiple}
