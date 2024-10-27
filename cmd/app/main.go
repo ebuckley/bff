@@ -127,7 +127,7 @@ func main() {
 		panic(err)
 	}
 
-	s := server.NewServer(app, server.Prefix("/backend"))
+	s := server.NewServer(app)
 	slog.Info("starting server on :8181")
 
 	err = http.ListenAndServe(":8181", logger(s))

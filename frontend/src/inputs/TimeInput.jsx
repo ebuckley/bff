@@ -3,6 +3,7 @@ import TimePicker from 'react-time-picker'; // You'll need to install this packa
 import 'react-time-picker/dist/TimePicker.css';
 import {Commitable} from "../util/components.jsx";
 import {useAppState} from "../util/state.js";
+import {Label} from "../ui/Label.jsx";
 
 
 export const TimeInput = ({ label, helpText, min, max, onCommit }) => {
@@ -20,7 +21,7 @@ export const TimeInput = ({ label, helpText, min, max, onCommit }) => {
     return (
         <Commitable onCommit={handleCommit} content={
             <>
-                <label className="text-lg font-bold">{label}</label>
+                <Label>{label}</Label>
                 <TimePicker
                     onChange={handleChange}
                     value={time}

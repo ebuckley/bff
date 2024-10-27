@@ -23,7 +23,7 @@ export const FileInput = ({ label, helpText, accept, multiple }) => {
     return (
         <Commitable onCommit={commit} content={
             <>
-                <label className="text-lg font-bold">{label}</label>
+                <Label>{label}</Label>
                 <input
                     type="file"
                     ref={fileInputRef}

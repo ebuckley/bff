@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import {Commitable} from "../util/components.jsx";
 import {useAppState} from "../util/state.js";
+import {Input} from "postcss";
 
 export const URLInput = ({ label, helpText, placeholder, required, onCommit }) => {
     const [value, setValue] = useState('');
@@ -22,10 +23,9 @@ export const URLInput = ({ label, helpText, placeholder, required, onCommit }) =
     return (
         <Commitable onCommit={handleCommit} content={
             <>
-                <label className="text-lg font-bold">{label}</label>
-                <input
+                <Label>{label}</Label>
+                <Input
                     type="url"
-                    className="border-gray-900 border-2 outline-2 outline-amber-600 px-4 py-2"
                     onChange={handleChange}
                     value={value}
                     placeholder={placeholder}

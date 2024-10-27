@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import Slider from 'react-slider';
 import {Commitable} from "../util/components.jsx";
-import {useAppState} from "../util/state.js"; // You'll need to install this package
+import {useAppState} from "../util/state.js";
+import {Label} from "../ui/Label.jsx"; // You'll need to install this package
 
 export const SliderInput = ({ label, helpText, min, max, step }) => {
     const [value, setValue] = useState(min);
@@ -19,7 +20,7 @@ export const SliderInput = ({ label, helpText, min, max, step }) => {
     return (
         <Commitable onCommit={handleCommit} content={
             <>
-                <label className="text-lg font-bold">{label}</label>
+                <Label>{label}</Label>
                 <Slider
                     min={min}
                     max={max}

@@ -1,25 +1,31 @@
 import React, {useState} from "react";
+import {Card, CardContent, CardFooter, CardHeader} from "../ui/Card.jsx";
+import {Button} from "../ui/Button.jsx";
 
-export const Commitable = ({ onCommit, content }) => {
+export const Commitable = ({onCommit, content}) => {
     const [hasCommitted, setHasCommitted] = useState(false);
 
     return (
-        <div className={"flex flex-col"}>
-            {React.isValidElement(content) ? content : null}
-            {hasCommitted ? (
-                <p className={"text-sm text-gray-500"}>Submitted</p>
-            ) : (
-                <button
-                    className={"border-2 border-gray-900 px-4 py-2 rounded hover:bg-amber-600 transition-all"}
-                    onClick={() => {
-                        if (onCommit()) {
-                            setHasCommitted(true);
-                        }
-                    }}
-                >
-                    Submit
-                </button>
-            )}
-        </div>
+        <Card>
+            <CardHeader></CardHeader>
+            <CardContent className={"flex flex-col gap-4"}>
+                {React.isValidElement(content) ? content : null}
+            </CardContent>
+            <CardFooter>
+                {hasCommitted ? (
+                    <p className={"text-sm text-gray-500"}>Submitted</p>
+                ) : (
+                    <Button
+                        onClick={() => {
+                            if (onCommit()) {
+                                setHasCommitted(true);
+                            }
+                        }}
+                    >
+                        Submit
+                    </Button>
+                )}
+            </CardFooter>
+        </Card>
     );
 };

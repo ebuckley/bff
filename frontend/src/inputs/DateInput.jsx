@@ -3,6 +3,7 @@ import DatePicker from 'react-datepicker'; // You'll need to install this packag
 import 'react-datepicker/dist/react-datepicker.css';
 import {Commitable} from "../util/components.jsx";
 import {useAppState} from "../util/state.js";
+import {Label} from "../ui/Label.jsx";
 
 export const DateInput = ({ label, helpText, min, max }) => {
     const [selectedDate, setSelectedDate] = useState(null);
@@ -22,7 +23,7 @@ export const DateInput = ({ label, helpText, min, max }) => {
     return (
         <Commitable onCommit={handleCommit} content={
             <>
-                <label className="text-lg font-bold">{label}</label>
+                <Label>{label}</Label>
                 <DatePicker
                     selected={selectedDate}
                     onChange={handleChange}

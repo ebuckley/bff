@@ -13,6 +13,9 @@ import {TimeInput} from "./inputs/TimeInput.jsx";
 import {SliderInput} from "./inputs/SliderInput.jsx";
 import {backend, useAppState, actionName} from "./util/state.js";
 import {TextAreaInput} from "./inputs/TextAreaInput.jsx";
+import {Input} from "./ui/Input.jsx";
+import {Switch} from "./ui/Switch.jsx";
+import {Label} from "./ui/Label.jsx";
 
 
 console.log('Backend URL:', backend)
@@ -30,11 +33,12 @@ const displayable = {
 
         const commitSend = () => {
             sendInput(value)
+            return true
         }
         return (
-            <Commitable onCommit={() => sendInput(value)} content={<>
-                <label className={"text-lg font-bold"}>{label}</label>
-                <input className={"border-gray-900 border-2 outline-2 outline-amber-600 px-4 py-2"}
+            <Commitable onCommit={commitSend} content={<>
+                <Label>{label}</Label>
+                <Input
                        onChange={(e) => setValue(e.target.value)} value={value}
                        type={"number"} placeholder={placeholder} required={required}/>
                 <p className={"text-sm"}>{helpText}</p>
@@ -52,8 +56,8 @@ const displayable = {
         }
         return (
             <Commitable onCommit={commitSend} content={<>
-                <label className={"text-lg font-bold"}>{label}</label>
-                <input className={"border-gray-900 border-2 outline-2 outline-amber-600 px-4 py-2"}
+                <Label >{label}</Label>
+                <Input
                        onChange={(e) => setValue(e.target.value)} value={value}
                        type={"text"} placeholder={placeholder} required={required}/>
                 <p className={"text-sm"}>{helpText}</p>
@@ -64,11 +68,14 @@ const displayable = {
         const {sendInput} = useAppState();
         const [value, setValue] = useState(false)
         return (
-            <Commitable onCommit={() => sendInput(value)} content={<>
-                <label className={"text-lg font-bold"}>{label}</label>
-                <input type={"radio"} value={value} onClick={() => setValue(true)}/>
+            <Commitable onCommit={() => {
+                sendInput(value)
+                return true;
+            }} content={<div className={"flex flex-col gap-2"}>
+                <Label>{label}</Label>
+                <Switch value={value} onClick={() => setValue(true)}/>
                 <p className={"text-sm"}>{helpText}</p>
-            </>}/>)
+            </div>}/>)
     },
     markdown: ({content}) => (<div className={"prose"} dangerouslySetInnerHTML={{__html: marked(content)}}/>),
 

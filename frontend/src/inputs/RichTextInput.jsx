@@ -13,7 +13,7 @@ export const RichTextInput = ({ label, helpText, initialValue }) => {
     return (
         <Commitable onCommit={handleCommit} content={
             <>
-                <label className="text-lg font-bold">{label}</label>
+                <Label>{label}</Label>
                 <b>TODO implement rich text!!</b>
                 {initialValue}
                 <p className="text-sm">{helpText}</p>

@@ -1,6 +1,7 @@
 import React, {useState} from 'react';
 import {Commitable} from "../util/components.jsx";
 import {useAppState} from "../util/state.js";
+import {Label} from "../ui/Label.jsx";
 
 export const TextAreaInput = ({label, helpText, placeholder, required}) => {
     const {sendInput} = useAppState();
@@ -18,7 +19,7 @@ export const TextAreaInput = ({label, helpText, placeholder, required}) => {
     return (
         <Commitable onCommit={handleCommit} content={
             <>
-                <label className="text-lg font-bold">{label}</label>
+                <Label>{label}</Label>
                 <textarea
                     className="border-gray-900 border-2 outline-2 outline-amber-600 px-4 py-2"
                     onChange={handleChange}
